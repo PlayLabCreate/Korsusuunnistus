@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<title>Korsu Challenge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body { font-family: Arial; background:#0f1a0f; color:#e6e6e6; margin:0 }
+header { background:#1c2b1c; padding:20px; text-align:center; font-size:24px; font-weight:bold; border-bottom:3px solid #3a5f3a }
+#startScreen { text-align:center; padding:30px }
+#startScreen input { padding:12px; width:80%; font-size:18px; border-radius:8px; border:none; margin-top:20px; text-align:center }
+#map { height:300px; width:100%; display:none }
+#game { padding:20px; display:none }
+.button { background:#3a5f3a; padding:12px; margin:10px 0; border-radius:8px; text-align:center; cursor:pointer; font-size:18px }
+.button:hover { background:#4c7a4c }
+.option { background:#2a3d2a; padding:15px; margin:10px 0; border:2px solid #3a5f3a; border-radius:8px; cursor:pointer; font-size:18px; text-align:center }
+.option:hover { background:#3a5f3a }
+#result { margin-top:20px; font-size:22px; font-weight:bold; text-align:center }
+img { width:90%; border:3px solid #3a5f3a; border-radius:10px; margin-top:20px }
+</style>
+</head>
+
+<body>
+
+<header>Korsu Challenge</header>
+
+<div id="startScreen">
+    <h2>Tervetuloa Korsu Challengeen</h2>
+    <p>Syötä ryhmän nimi aloittaaksesi:</p>
+    <input id="teamNameInput" type="text" placeholder="Ryhmän nimi">
+    <div class="button" onclick="startGame()">Aloita peli</div>
+</div>
+
+<div id="map"></div>
+
+<div id="game">
+    <h2 id="teamNameDisplay"></h2>
+    <h3>Rastit avautuvat automaattisesti kun olet 10 m säteellä</h3>
+    <div id="rastiView"></div>
+    <div id="result"></div>
+</div>
+
+<script>
+let teamName="";
+let savedShelterPhoto=null;
+let savedEvacPhoto=null;
+let score=0;
+let startTime=0;
+let compassAnswer="";
+let compassChoice="";
+let routeDirection=null;
+
+let map;
+let markerLayer;
+let playerMarker=null;
+
+const forwardOrder=[1,2,3,4,5,6];
+const reverseOrder=[6,5,4,3,2,1];
+let visibleRastit=[1,6];
+
+const rastit=[
+{id:1,lat:62.434753,lon:25.896242},
+{id:2,lat:62.434913,lon:25.894336},
+{id:3,lat:62.435315,lon:25.891585},
+{id:4,lat:62.436466,lon:25.890458},
+{id:5,lat:62.436337,lon:25.893205},
+{id:6,lat:62.436272,lon:25.898172}
+];
+
+function startGame(){
+    const input=document.getElementById("teamNameInput").value.trim();
+    if(input.length<2){ alert("Anna ryhmän nimi."); return; }
+    teamName=input;
+    startTime=Date.now();
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("map").style.display="block";
+    document.getElementById("game").style.display="block";
+    document.getElementById("teamNameDisplay").innerHTML="Ryhmä: "+teamName;
+    initMap();
+    startGeolocation();
+}
+
+function initMap(){
+    map=L.map('map').setView([62.4353,25.8945],15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    markerLayer=L.layerGroup().addTo(map);
+    updateMapMarkers();
+}
+
+function updateMapMarkers(){
+    markerLayer.clearLayers();
+    visibleRastit.forEach(id=>{
+        const r=rastit.find(x=>x.id===id);
+        if(r){ L.marker([r.lat,r.lon]).addTo(markerLayer).bindPopup("Rasti "+r.id); }
+    });
+}
+
+function startGeolocation(){
+    navigator.geolocation.watchPosition(onPosition,onGeoError,{
+        enableHighAccuracy:true,
+        maximumAge:1000,
+        timeout:10000
+    });
+}
+
+function onPosition(pos){
+    const lat=pos.coords.latitude;
+    const lng=pos.coords.longitude;
+
+    if(!playerMarker){
+        playerMarker=L.circleMarker([lat,lng],{
+            radius:10,
+            color:"#3399ff",
+            fillColor:"#3399ff",
+            fillOpacity:0.9
+        }).addTo(map);
+    } else {
+        playerMarker.setLatLng([lat,lng]);
+    }
+
+    checkRastiDistance(lat,lng);
+}
+
+function onGeoError(err){
+    alert("GPS-virhe: "+err.message);
+}
+
+function distanceMeters(lat1,lon1,lat2,lon2){
+    const R=6371000;
+    const dLat=(lat2-lat1)*Math.PI/180;
+    const dLon=(lon2-lon1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+
+        Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+        Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function checkRastiDistance(lat,lng){
+    visibleRastit.forEach(id=>{
+        const r=rastit.find(x=>x.id===id);
+        const d=distanceMeters(lat,lng,r.lat,r.lon);
+        if(d<=10){ openRasti(id); }
+    });
+}
+
+function openRasti(id){
+    if(routeDirection===null){
+        if(id===1)routeDirection="forward";
+        if(id===6)routeDirection="reverse";
+    }
+    if(id===1)renderRasti1();
+    if(id===2)renderRasti2();
+    if(id===3)renderRasti3();
+    if(id===4)renderRasti4();
+    if(id===5)renderRasti5();
+    if(id===6)renderRasti6();
+}
+
+function completeRasti(id){
+    let next=null;
+    if(routeDirection==="forward"){
+        const i=forwardOrder.indexOf(id);
+        next=forwardOrder[i+1];
+    }
+    if(routeDirection==="reverse"){
+        const i=reverseOrder.indexOf(id);
+        next=reverseOrder[i+1];
+    }
+    if(next){
+        visibleRastit=[next];
+        updateMapMarkers();
+    }
+}
+
+function renderRasti1(){
+    rastiView.innerHTML=`
+        <h2>Rasti 1 – Suuri haava</h2>
+        <p>Mikä on oikea ensitoimi?</p>
+        <div class="option" onclick="wrong()">Puhdistat haavan vedellä</div>
+        <div class="option" onclick="wrong()">Peität haavan takilla</div>
+        <div class="option" onclick="correct()">Pysäytät vuodon painamalla</div>
+        <div class="option" onclick="wrong()">Kiristät buffin maksimiin</div>
+        <div class="button" onclick="completeRasti(1)">Jatka</div>`;
+}
+
+function renderRasti2(){
+    rastiView.innerHTML=`
+        <h2>Rasti 2 – Rakentakaa hätämajoitus</h2>
+        <p>Ottakaa kuva hätämajoituksesta.</p>
+        <input type="file" accept="image/*" capture="environment" onchange="saveShelterPhoto(event)">`;
+}
+
+function saveShelterPhoto(event){
+    const file=event.target.files[0];
+    const reader=new FileReader();
+    reader.onload=e=>{
+        savedShelterPhoto=e.target.result;
+        completeRasti(2);
+        rastiView.innerHTML=`<h2>Kuva tallennettu!</h2>`;
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderRasti3(){
+    rastiView.innerHTML=`
+        <h2>Rasti 3 – Suojan rakentaminen</h2>
+        <p>Mikä on tärkein eriste?</p>
+        <div class="option" onclick="wrong()">Katto</div>
+        <div class="option" onclick="correct()">Maapohjan eristys</div>
+        <div class="option" onclick="wrong()">Tuulensuoja</div>
+        <div class="button" onclick="completeRasti(3)">Jatka</div>`;
+}
+
+function renderRasti4(){
+    rastiView.innerHTML=`
+        <h2>Rasti 4 – Evakuointi</h2>
+        <p>Ottakaa kuva evakuoinnista.</p>
+        <input type="file" accept="image/*" capture="environment" onchange="saveEvacPhoto(event)">`;
+}
+
+function saveEvacPhoto(event){
+    const file=event.target.files[0];
+    const reader=new FileReader();
+    reader.onload=e=>{
+        savedEvacPhoto=e.target.result;
+        completeRasti(4);
+        rastiView.innerHTML=`<h2>Kuva tallennettu!</h2>`;
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderRasti5(){
+    rastiView.innerHTML=`
+        <h2>Rasti 5 – Tulenteko</h2>
+        <p>Mikä on hyvä sytyke?</p>
+        <div class="option" onclick="correct()">Kuiva kaarna</div>
+        <div class="option" onclick="wrong()">Märkä puu</div>
+        <div class="button" onclick="completeRasti(5)">Jatka</div>`;
+}
+
+function renderRasti6(){
+    rastiView.innerHTML=`
+        <h2>Rasti 6 – Tee itse kompassi</h2>
+        <p>Selitä omin sanoin, kuinka rakennat kompassin.</p>
+        <textarea id="compassInput" style="width:100%;height:150px;font-size:16px;padding:10px;border-radius:8px;"></textarea>
+        <h3>Kumpi neulan pää on pohjoinen?</h3>
+        <div class="option" onclick="selectCompassChoice('correct')">Luonnonmerkit: sammal pohjoisessa, oksat etelässä, vuosirenkaat leveämmät etelässä</div>
+        <div class="option" onclick="selectCompassChoice('wrong')">Tuulen suunta</div>
+        <div class="option" onclick="selectCompassChoice('wrong')">Neulan kiilto</div>
+        <div class="option" onclick="selectCompassChoice('wrong')">Ruuvi vertailuna</div>
+        <div class="button" onclick="saveCompassAnswer()">Tallenna vastaus</div>`;
+}
+
+function selectCompassChoice(choice){
+    compassChoice=choice;
+    result.innerHTML=choice==="correct"?"✔️ Oikein!":"❌ Väärin";
+}
+
+function saveCompassAnswer(){
+    compassAnswer=document.getElementById("compassInput").value.trim();
+    completeRasti(6);
+    rastiView.innerHTML=`<h2>Vastaus tallennettu!</h2><div class="button" onclick="showFinalScreen()">Loppunäkymä</div>`;
+}
+
+function correct(){ score++; result.innerHTML="✔️ Oikein!"; result.style.color="#aaffaa"; }
+function wrong(){ result.innerHTML="❌ Väärin"; result.style.color="#ff6666"; }
+
+function showFinalScreen(){
+    const endTime=Date.now();
+    const totalSeconds=Math.floor((endTime-startTime)/1000);
+    const minutes=Math.floor(totalSeconds/60);
+    const seconds=totalSeconds%60;
+
+    rastiView.innerHTML=`
+        <h2>Loppunäkymä</h2>
+        <h3>Ryhmä: ${teamName}</h3>
+        <p>Suoritusaika: ${minutes} min ${seconds} s</p>
+        <p>Pisteet: ${score}</p>
+
+        <h3>Hätämajoitus</h3>
+        ${savedShelterPhoto?`<img src="${savedShelterPhoto}">`:"Ei kuvaa"}
+
+        <h3>Evakuointi</h3>
+        ${savedEvacPhoto?`<img src="${savedEvacPhoto}">`:"Ei kuvaa"}
+
+        <h3>Kompassitehtävän vastaus</h3>
+        <p>${compassAnswer}</p>
+
+        <h3>Monivalinnan tulos</h3>
+        <p>${compassChoice==="correct"?"✔️ Oikein":"❌ Väärin"}</p>
+
+        <h3>Oikea ratkaisu – Kompassin teko</h3>
+        <p>Magnetoi neula silkkihuivilla, kelluta lehdellä veden pinnalla, neula kääntyy pohjois–etelä‑suuntaan.</p>
+
+        <h3>Oikea ratkaisu – Pohjoisen tunnistaminen</h3>
+        <p>Sammal kasvaa pohjoisessa, männyn oksat tiheämmät etelässä, vuosirenkaat leveämmät etelässä.</p>`;
+}
+</script>
+
+</body>
+</html>
