@@ -57,6 +57,8 @@ let map;
 let markerLayer;
 let playerMarker=null;
 
+let openedRasti = null;
+
 const forwardOrder=[1,2,3,4,5,6];
 const reverseOrder=[6,5,4,3,2,1];
 let visibleRastit=[1,6];
@@ -147,6 +149,9 @@ function checkRastiDistance(lat,lng){
 }
 
 function openRasti(id){
+    if (openedRasti === id) return;
+    openedRasti = id;
+
     if(routeDirection===null){
         if(id===1)routeDirection="forward";
         if(id===6)routeDirection="reverse";
@@ -160,6 +165,8 @@ function openRasti(id){
 }
 
 function completeRasti(id){
+    openedRasti = null;
+
     let next=null;
     if(routeDirection==="forward"){
         const i=forwardOrder.indexOf(id);
