@@ -49,6 +49,11 @@ let savedShelterPhoto=null;
 let savedEvacPhoto=null;
 let score=0;
 let startTime=0;
+
+let answerR1="";
+let answerR3=[];
+let answerR5="";
+
 let compassAnswer="";
 let compassChoice="";
 let routeDirection=null;
@@ -144,7 +149,7 @@ function checkRastiDistance(lat,lng){
     visibleRastit.forEach(id=>{
         const r=rastit.find(x=>x.id===id);
         const d=distanceMeters(lat,lng,r.lat,r.lon);
-        if(d<=5){ openRasti(id); }   // ← 5 METRIÄ
+        if(d<=5){ openRasti(id); }
     });
 }
 
@@ -186,17 +191,23 @@ function completeRasti(id){
 
     visibleRastit=[next];
     updateMapMarkers();
+    rastiView.innerHTML = `<p>Tehtävä suoritettu. Jatka seuraavalle rastille.</p>`;
 }
 
 function renderRasti1(){
     rastiView.innerHTML=`
-        <h2>Rasti 1 – Suuri haava</h2>
-        <p>Mikä on oikea ensitoimi?</p>
-        <div class="option" onclick="wrong()">Puhdistat haavan vedellä</div>
-        <div class="option" onclick="wrong()">Peität haavan takilla</div>
-        <div class="option" onclick="correct()">Pysäytät vuodon painamalla</div>
-        <div class="option" onclick="wrong()">Kiristät buffin maksimiin</div>
-        <div class="button" onclick="completeRasti(1)">Jatka</div>`;
+        <h2>Rasti 1 – Tajuttomuus</h2>
+        <p>Kuinka tunnistat onko henkilö tajuton?</p>
+        <div class="option" onclick="saveR1('Tajuton henkilö ei reagoi ääneen, kosketukseen tai herättelyyn. Hengitys on äänetöntä ja tasaista, lihasjäntevyys puuttuu.', true)">Tajuton henkilö ei reagoi ääneen, kosketukseen tai herättelyyn...</div>
+        <div class="option" onclick="saveR1('Hän puhuu sekavasti', false)">Hän puhuu sekavasti</div>
+        <div class="option" onclick="saveR1('Hän juoksee karkuun', false)">Hän juoksee karkuun</div>
+        <div class="option" onclick="saveR1('Hän valittaa kipua', false)">Hän valittaa kipua</div>`;
+}
+
+function saveR1(text, correct){
+    answerR1=text;
+    if(correct) score++;
+    completeRasti(1);
 }
 
 function renderRasti2(){
@@ -212,19 +223,38 @@ function saveShelterPhoto(event){
     reader.onload=e=>{
         savedShelterPhoto=e.target.result;
         completeRasti(2);
-        rastiView.innerHTML=`<h2>Kuva tallennettu!</h2>`;
     };
     reader.readAsDataURL(file);
 }
 
 function renderRasti3(){
     rastiView.innerHTML=`
-        <h2>Rasti 3 – Suojan rakentaminen</h2>
-        <p>Mikä on tärkein eriste?</p>
-        <div class="option" onclick="wrong()">Katto</div>
-        <div class="option" onclick="correct()">Maapohjan eristys</div>
-        <div class="option" onclick="wrong()">Tuulensuoja</div>
-        <div class="button" onclick="completeRasti(3)">Jatka</div>`;
+        <h2>Rasti 3 – Pukeutuminen retkellä</h2>
+        <p>Retkeillessä tärkeintä pukeutumisessa on?</p>
+
+        <label><input type="checkbox" id="r3_1"> Hienot vaatteet</label><br>
+        <label><input type="checkbox" id="r3_2"> Vedenpitävyys</label><br>
+        <label><input type="checkbox" id="r3_3"> Kerrospukeutuminen</label><br>
+        <label><input type="checkbox" id="r3_4"> Kestävyys</label><br>
+
+        <div class="button" onclick="saveR3()">Tallenna vastaus</div>`;
+}
+
+function saveR3(){
+    const v1=document.getElementById("r3_1").checked;
+    const v2=document.getElementById("r3_2").checked;
+    const v3=document.getElementById("r3_3").checked;
+    const v4=document.getElementById("r3_4").checked;
+
+    answerR3=[];
+    if(v1) answerR3.push("Hienot vaatteet");
+    if(v2) answerR3.push("Vedenpitävyys");
+    if(v3) answerR3.push("Kerrospukeutuminen");
+    if(v4) answerR3.push("Kestävyys");
+
+    if(!v1 && v2 && v3 && v4) score++;
+
+    completeRasti(3);
 }
 
 function renderRasti4(){
@@ -240,18 +270,24 @@ function saveEvacPhoto(event){
     reader.onload=e=>{
         savedEvacPhoto=e.target.result;
         completeRasti(4);
-        rastiView.innerHTML=`<h2>Kuva tallennettu!</h2>`;
     };
     reader.readAsDataURL(file);
 }
 
 function renderRasti5(){
     rastiView.innerHTML=`
-        <h2>Rasti 5 – Tulenteko</h2>
-        <p>Mikä on hyvä sytyke?</p>
-        <div class="option" onclick="correct()">Kuiva kaarna</div>
-        <div class="option" onclick="wrong()">Märkä puu</div>
-        <div class="button" onclick="completeRasti(5)">Jatka</div>`;
+        <h2>Rasti 5 – Nuotion paikka</h2>
+        <p>Mihin on turvallinen paikka tehdä nuotio?</p>
+        <div class="option" onclick="saveR5('Puiden alle', false)">Puiden alle</div>
+        <div class="option" onclick="saveR5('Kallion kolo', true)">Kallion kolo</div>
+        <div class="option" onclick="saveR5('Pelto', false)">Pelto</div>
+        <div class="option" onclick="saveR5('Rakennuksen seinusta', false)">Rakennuksen seinusta</div>`;
+}
+
+function saveR5(text, correct){
+    answerR5=text;
+    if(correct) score++;
+    completeRasti(5);
 }
 
 function renderRasti6(){
@@ -260,7 +296,7 @@ function renderRasti6(){
         <p>Selitä omin sanoin, kuinka rakennat kompassin.</p>
         <textarea id="compassInput" style="width:100%;height:150px;font-size:16px;padding:10px;border-radius:8px;"></textarea>
         <h3>Kumpi neulan pää on pohjoinen?</h3>
-        <div class="option" onclick="selectCompassChoice('correct')">Luonnonmerkit: sammal pohjoisessa, oksat etelässä, vuosirenkaat leveämmät etelässä</div>
+        <div class="option" onclick="selectCompassChoice('correct')">Luonnonmerkit: sammal pohjoisessa, oksat etelässä...</div>
         <div class="option" onclick="selectCompassChoice('wrong')">Tuulen suunta</div>
         <div class="option" onclick="selectCompassChoice('wrong')">Neulan kiilto</div>
         <div class="option" onclick="selectCompassChoice('wrong')">Ruuvi vertailuna</div>
@@ -269,17 +305,13 @@ function renderRasti6(){
 
 function selectCompassChoice(choice){
     compassChoice=choice;
-    result.innerHTML=choice==="correct"?"✔️ Oikein!":"❌ Väärin";
 }
 
 function saveCompassAnswer(){
     compassAnswer=document.getElementById("compassInput").value.trim();
+    if(compassChoice==="correct") score++;
     completeRasti(6);
-    rastiView.innerHTML=`<h2>Vastaus tallennettu!</h2>`;
 }
-
-function correct(){ score++; result.innerHTML="✔️ Oikein!"; result.style.color="#aaffaa"; }
-function wrong(){ result.innerHTML="❌ Väärin"; result.style.color="#ff6666"; }
 
 function showFinalScreen(){
     const endTime=Date.now();
@@ -293,19 +325,30 @@ function showFinalScreen(){
         <p>Suoritusaika: ${minutes} min ${seconds} s</p>
         <p>Pisteet: ${score}</p>
 
-        <h3>Hätämajoitus</h3>
+        <h3>Rasti 1 – Tajuttomuus</h3>
+        <p>${answerR1}</p>
+
+        <h3>Rasti 2 – Hätämajoitus</h3>
         ${savedShelterPhoto?`<img src="${savedShelterPhoto}">`:"Ei kuvaa"}
 
-        <h3>Evakuointi</h3>
+        <h3>Rasti 3 – Pukeutuminen</h3>
+        <p>${answerR3.join(", ")}</p>
+
+        <h3>Rasti 4 – Evakuointi</h3>
         ${savedEvacPhoto?`<img src="${savedEvacPhoto}">`:"Ei kuvaa"}
 
-        <h3>Kompassitehtävän vastaus</h3>
-        <p>${compassAnswer}</p>
+        <h3>Rasti 5 – Nuotion paikka</h3>
+        <p>${answerR5}</p>
 
-        <h3>Monivalinnan tulos</h3>
-        <p>${compassChoice==="correct"?"✔️ Oikein":"❌ Väärin"}</p>`;
+        <h3>Rasti 6 – Kompassi</h3>
+        <p>${compassAnswer}</p>
+        <p>${compassChoice==="correct"?"✔️ Oikein":"❌ Väärin"}</p>
+
+        <h2>Palaa veljeskorsulle</h2>
+    `;
 }
 </script>
 
 </body>
 </html>
+
