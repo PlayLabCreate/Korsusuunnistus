@@ -2,7 +2,7 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<title>Korsu Challenge</title>
+<title>Korsu Challenge – Testiversio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -25,20 +25,20 @@ img { width:90%; border:3px solid #3a5f3a; border-radius:10px; margin-top:20px }
 
 <body>
 
-<header>Korsu Challenge</header>
+<header>Korsu Challenge – Testiversio</header>
 
 <div id="startScreen">
-    <h2>Tervetuloa Korsu Challengeen</h2>
+    <h2>Kotitesti</h2>
     <p>Syötä ryhmän nimi aloittaaksesi:</p>
     <input id="teamNameInput" type="text" placeholder="Ryhmän nimi">
-    <div class="button" onclick="startGame()">Aloita peli</div>
+    <div class="button" onclick="startGame()">Aloita testi</div>
 </div>
 
 <div id="map"></div>
 
 <div id="game">
     <h2 id="teamNameDisplay"></h2>
-    <h3>Rastit avautuvat automaattisesti kun olet 10 m säteellä</h3>
+    <h3>Rastit avautuvat 5 m säteellä</h3>
     <div id="rastiView"></div>
     <div id="result"></div>
 </div>
@@ -64,12 +64,12 @@ const reverseOrder=[6,5,4,3,2,1];
 let visibleRastit=[1,6];
 
 const rastit=[
-{id:1,lat:62.434753,lon:25.896242},
-{id:2,lat:62.434913,lon:25.894336},
-{id:3,lat:62.435315,lon:25.891585},
-{id:4,lat:62.436466,lon:25.890458},
-{id:5,lat:62.436337,lon:25.893205},
-{id:6,lat:62.436272,lon:25.898172}
+    {id:1, lat:62.457230, lon:25.965059},
+    {id:2, lat:62.457255, lon:25.964528},
+    {id:3, lat:62.457040, lon:25.964372},
+    {id:4, lat:62.456971, lon:25.964184},
+    {id:5, lat:62.456958, lon:25.964546},
+    {id:6, lat:62.456963, lon:25.964887}
 ];
 
 function startGame(){
@@ -86,7 +86,7 @@ function startGame(){
 }
 
 function initMap(){
-    map=L.map('map').setView([62.4353,25.8945],15);
+    map=L.map('map').setView([62.45715,25.96470],19);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
     markerLayer=L.layerGroup().addTo(map);
     updateMapMarkers();
@@ -144,11 +144,13 @@ function checkRastiDistance(lat,lng){
     visibleRastit.forEach(id=>{
         const r=rastit.find(x=>x.id===id);
         const d=distanceMeters(lat,lng,r.lat,r.lon);
-        if(d<=10){ openRasti(id); }
+        if(d<=5){ openRasti(id); }   // ← 5 METRIÄ
     });
 }
 
 function openRasti(id){
+    result.innerHTML = "";
+
     if (openedRasti === id) return;
     openedRasti = id;
 
@@ -176,10 +178,14 @@ function completeRasti(id){
         const i=reverseOrder.indexOf(id);
         next=reverseOrder[i+1];
     }
-    if(next){
-        visibleRastit=[next];
-        updateMapMarkers();
+
+    if (!next) {
+        showFinalScreen();
+        return;
     }
+
+    visibleRastit=[next];
+    updateMapMarkers();
 }
 
 function renderRasti1(){
@@ -269,7 +275,7 @@ function selectCompassChoice(choice){
 function saveCompassAnswer(){
     compassAnswer=document.getElementById("compassInput").value.trim();
     completeRasti(6);
-    rastiView.innerHTML=`<h2>Vastaus tallennettu!</h2><div class="button" onclick="showFinalScreen()">Loppunäkymä</div>`;
+    rastiView.innerHTML=`<h2>Vastaus tallennettu!</h2>`;
 }
 
 function correct(){ score++; result.innerHTML="✔️ Oikein!"; result.style.color="#aaffaa"; }
@@ -297,13 +303,7 @@ function showFinalScreen(){
         <p>${compassAnswer}</p>
 
         <h3>Monivalinnan tulos</h3>
-        <p>${compassChoice==="correct"?"✔️ Oikein":"❌ Väärin"}</p>
-
-        <h3>Oikea ratkaisu – Kompassin teko</h3>
-        <p>Magnetoi neula silkkihuivilla, kelluta lehdellä veden pinnalla, neula kääntyy pohjois–etelä‑suuntaan.</p>
-
-        <h3>Oikea ratkaisu – Pohjoisen tunnistaminen</h3>
-        <p>Sammal kasvaa pohjoisessa, männyn oksat tiheämmät etelässä, vuosirenkaat leveämmät etelässä.</p>`;
+        <p>${compassChoice==="correct"?"✔️ Oikein":"❌ Väärin"}</p>`;
 }
 </script>
 
