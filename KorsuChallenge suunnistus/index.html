@@ -2,8 +2,14 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<title>Korsu Challenge – Testiversio</title>
+<title>KorsuChallenge Suunnistus</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Estetään välimuisti, jotta puhelin näyttää aina uusimman version -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -25,13 +31,13 @@ img { width:90%; border:3px solid #3a5f3a; border-radius:10px; margin-top:20px }
 
 <body>
 
-<header>Korsu Challenge – Testiversio</header>
+<header>KorsuChallenge Suunnistus</header>
 
 <div id="startScreen">
-    <h2>Kotitesti</h2>
+    <h2>Tervetuloa KorsuChallenge Suunnistukseen</h2>
     <p>Syötä ryhmän nimi aloittaaksesi:</p>
     <input id="teamNameInput" type="text" placeholder="Ryhmän nimi">
-    <div class="button" onclick="startGame()">Aloita testi</div>
+    <div class="button" onclick="startGame()">Aloita peli</div>
 </div>
 
 <div id="map"></div>
@@ -244,8 +250,8 @@ function saveR1_B(text, correct){
 
 function renderR2(){
     rastiView.innerHTML=`
-        <h2>Rasti 2 – Rakentakaa hätämajoitus</h2>
-        <p>Ottakaa kuva hätämajoituksesta.</p>
+        <h2>Rasti 2 – Hätämajoitus</h2>
+        <p>Ottakaa kuva rakentamastanne hätämajoituksesta.</p>
         <input type="file" accept="image/*" capture="environment" onchange="saveShelterPhoto(event)">`;
 }
 
@@ -317,7 +323,7 @@ function saveR3_B(){
 function renderR4(){
     rastiView.innerHTML=`
         <h2>Rasti 4 – Evakuointi</h2>
-        <p>Ottakaa kuva evakuoinnista.</p>
+        <p>Ottakaa kuva suorittamastanne evakuoinnista.</p>
         <input type="file" accept="image/*" capture="environment" onchange="saveEvacPhoto(event)">`;
 }
 
@@ -376,7 +382,7 @@ function saveR5_B(text, correct){
 function renderR6(){
     rastiView.innerHTML=`
         <h2>Rasti 6 – Kompassin rakentaminen</h2>
-        <p>Kirjoita omin sanoin, miten rakennat kompassin luonnossa.</p>
+        <p>Kirjoita omin sanoin, miten rakennat kompassin luonnossa. Repusta löytyy: vaihtovaatteita, neula ja lankaa, kuksa, vettä, puukko ja silkkihuivi.</p>
 
         <textarea id="compassInput" 
             style="width:100%;height:180px;font-size:16px;padding:10px;border-radius:8px;"></textarea>
@@ -388,7 +394,7 @@ function renderR6(){
 function saveR6(){
     R6 = document.getElementById("compassInput").value.trim();
 
-    const keywords = ["kuks", "vesi", "lehti", "kellu", "neula", "silk", "magnet", "pohjois"];
+    const keywords = ["kuksa", "vesi", "lehti", "kellu", "neula", "silkki", "magnet", "pohjois"];
     let hits = 0;
     const lower = R6.toLowerCase();
 
@@ -428,7 +434,8 @@ function showFinalScreen(){
 
         <h3>Rasti 3 – Vedenpuute</h3>
         <p>${R3_A}</p>
-                <h3>Rasti 3 – Pukeutuminen</h3>
+
+        <h3>Rasti 3 – Pukeutuminen</h3>
         <p>${R3_B.join(", ")}</p>
 
         <h3>Rasti 4 – Evakuointi</h3>
@@ -447,7 +454,5 @@ function showFinalScreen(){
     `;
 }
 </script>
-
 </body>
 </html>
-
