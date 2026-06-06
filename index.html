@@ -5,7 +5,7 @@
 <title>KorsuChallenge Suunnistus</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Estetään välimuisti, jotta puhelin näyttää aina uusimman version -->
+<!-- Estetään välimuisti -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -96,10 +96,25 @@ function startGame(){
 }
 
 function initMap(){
-    map=L.map('map').setView([62.45715,25.96470],19);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    // Kartta Peurungan rastien keskelle
+    map = L.map('map').setView([62.457096, 25.964973], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        minZoom: 15
+    }).addTo(map);
+
     markerLayer=L.layerGroup().addTo(map);
     updateMapMarkers();
+
+    // Näytä rasti 1 ja 6 samassa näkymässä
+    const r1 = rastit.find(r => r.id === 1);
+    const r6 = rastit.find(r => r.id === 6);
+    const bounds = L.latLngBounds(
+        [r1.lat, r1.lon],
+        [r6.lat, r6.lon]
+    );
+    map.fitBounds(bounds, { padding: [50, 50] });
 }
 
 function updateMapMarkers(){
@@ -132,6 +147,9 @@ function onPosition(pos){
     } else {
         playerMarker.setLatLng([lat,lng]);
     }
+
+    // Kartta seuraa pelaajaa, mutta zoom ei muutu
+    map.panTo([lat, lng], { animate: true });
 
     checkRastiDistance(lat,lng);
 }
@@ -454,5 +472,6 @@ function showFinalScreen(){
     `;
 }
 </script>
+
 </body>
 </html>
