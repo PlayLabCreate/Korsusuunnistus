@@ -2,8 +2,14 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<title>Korsu Challenge – Testiversio</title>
+<title>KorsuChallenge Suunnistus</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Estetään välimuisti, jotta puhelin näyttää aina uusimman version -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -25,13 +31,13 @@ img { width:90%; border:3px solid #3a5f3a; border-radius:10px; margin-top:20px }
 
 <body>
 
-<header>Korsu Challenge – Testiversio</header>
+<header>KorsuChallenge Suunnistus</header>
 
 <div id="startScreen">
-    <h2>Kotitesti</h2>
+    <h2>Tervetuloa KorsuChallenge Suunnistukseen</h2>
     <p>Syötä ryhmän nimi aloittaaksesi:</p>
     <input id="teamNameInput" type="text" placeholder="Ryhmän nimi">
-    <div class="button" onclick="startGame()">Aloita testi</div>
+    <div class="button" onclick="startGame()">Aloita peli</div>
 </div>
 
 <div id="map"></div>
@@ -50,22 +56,21 @@ let savedEvacPhoto=null;
 let score=0;
 let startTime=0;
 
-let answerR1="";
-let answerR3=[];
-let answerR5="";
-
-let compassAnswer="";
-let compassChoice="";
-let routeDirection=null;
+let R1_A="", R1_B="";
+let R3_A="", R3_B=[];
+let R5_A="", R5_B="";
+let R6="";
 
 let map;
 let markerLayer;
 let playerMarker=null;
 
 let openedRasti = null;
+let rastiPhase = 1;
 
 const forwardOrder=[1,2,3,4,5,6];
 const reverseOrder=[6,5,4,3,2,1];
+let routeDirection=null;
 let visibleRastit=[1,6];
 
 const rastit=[
@@ -158,17 +163,26 @@ function openRasti(id){
 
     if (openedRasti === id) return;
     openedRasti = id;
+    rastiPhase = 1;
 
     if(routeDirection===null){
         if(id===1)routeDirection="forward";
         if(id===6)routeDirection="reverse";
     }
-    if(id===1)renderRasti1();
-    if(id===2)renderRasti2();
-    if(id===3)renderRasti3();
-    if(id===4)renderRasti4();
-    if(id===5)renderRasti5();
-    if(id===6)renderRasti6();
+
+    if(id===1)renderR1_A();
+    if(id===2)renderR2();
+    if(id===3)renderR3_A();
+    if(id===4)renderR4();
+    if(id===5)renderR5_A();
+    if(id===6)renderR6();
+}
+
+function nextPhase(rasti){
+    rastiPhase = 2;
+    if(rasti===1)renderR1_B();
+    if(rasti===3)renderR3_B();
+    if(rasti===5)renderR5_B();
 }
 
 function completeRasti(id){
@@ -194,26 +208,50 @@ function completeRasti(id){
     rastiView.innerHTML = `<p>Tehtävä suoritettu. Jatka seuraavalle rastille.</p>`;
 }
 
-function renderRasti1(){
+//
+// RASTI 1
+//
+
+function renderR1_A(){
+    rastiView.innerHTML=`
+        <h2>Rasti 1 – Haava</h2>
+        <p>Henkilöllä on suuri haava kädessä. Mitä teet?</p>
+        <div class="option" onclick="saveR1_A('Kiristän huivilla maksimikireyteen', false)">Kiristän huivilla maksimikireyteen</div>
+        <div class="option" onclick="saveR1_A('Otan ojasta vettä ja huuhtelen haavan', false)">Otan ojasta vettä ja huuhtelen haavan</div>
+        <div class="option" onclick="saveR1_A('Painan haavaa ja soitan apua', true)">Painan haavaa ja soitan apua</div>
+        <div class="option" onclick="saveR1_A('Menen ohi', false)">Menen ohi</div>`;
+}
+
+function saveR1_A(text, correct){
+    R1_A=text;
+    if(correct) score++;
+    nextPhase(1);
+}
+
+function renderR1_B(){
     rastiView.innerHTML=`
         <h2>Rasti 1 – Tajuttomuus</h2>
         <p>Kuinka tunnistat onko henkilö tajuton?</p>
-        <div class="option" onclick="saveR1('Tajuton henkilö ei reagoi ääneen, kosketukseen tai herättelyyn. Hengitys on äänetöntä ja tasaista, lihasjäntevyys puuttuu.', true)">Tajuton henkilö ei reagoi ääneen, kosketukseen tai herättelyyn...</div>
-        <div class="option" onclick="saveR1('Hän puhuu sekavasti', false)">Hän puhuu sekavasti</div>
-        <div class="option" onclick="saveR1('Hän juoksee karkuun', false)">Hän juoksee karkuun</div>
-        <div class="option" onclick="saveR1('Hän valittaa kipua', false)">Hän valittaa kipua</div>`;
+        <div class="option" onclick="saveR1_B('Tajuton henkilö ei reagoi ääneen, kosketukseen tai herättelyyn. Hengitys on äänetöntä ja tasaista, lihasjäntevyys puuttuu.', true)">Tajuton henkilö ei reagoi ääneen, kosketukseen tai herättelyyn...</div>
+        <div class="option" onclick="saveR1_B('Hän puhuu sekavasti', false)">Hän puhuu sekavasti</div>
+        <div class="option" onclick="saveR1_B('Hän juoksee karkuun', false)">Hän juoksee karkuun</div>
+        <div class="option" onclick="saveR1_B('Hän valittaa kipua', false)">Hän valittaa kipua</div>`;
 }
 
-function saveR1(text, correct){
-    answerR1=text;
+function saveR1_B(text, correct){
+    R1_B=text;
     if(correct) score++;
     completeRasti(1);
 }
 
-function renderRasti2(){
+//
+// RASTI 2
+//
+
+function renderR2(){
     rastiView.innerHTML=`
-        <h2>Rasti 2 – Rakentakaa hätämajoitus</h2>
-        <p>Ottakaa kuva hätämajoituksesta.</p>
+        <h2>Rasti 2 – Hätämajoitus</h2>
+        <p>Ottakaa kuva rakentamastanne hätämajoituksesta.</p>
         <input type="file" accept="image/*" capture="environment" onchange="saveShelterPhoto(event)">`;
 }
 
@@ -227,40 +265,65 @@ function saveShelterPhoto(event){
     reader.readAsDataURL(file);
 }
 
-function renderRasti3(){
+//
+// RASTI 3
+//
+
+function renderR3_A(){
     rastiView.innerHTML=`
-        <h2>Rasti 3 – Pukeutuminen retkellä</h2>
-        <p>Retkeillessä tärkeintä pukeutumisessa on?</p>
+        <h2>Rasti 3 – Vedenpuute</h2>
+        <p>Kuinka pitkään ihminen selviää ilman juomavettä?</p>
 
-        <label><input type="checkbox" id="r3_1"> Hienot vaatteet</label><br>
-        <label><input type="checkbox" id="r3_2"> Vedenpitävyys</label><br>
-        <label><input type="checkbox" id="r3_3"> Kerrospukeutuminen</label><br>
-        <label><input type="checkbox" id="r3_4"> Kestävyys</label><br>
-
-        <div class="button" onclick="saveR3()">Tallenna vastaus</div>`;
+        <div class="option" onclick="saveR3_A('1 päivä', false)">1 päivä</div>
+        <div class="option" onclick="saveR3_A('2–5 päivää', true)">2–5 päivää</div>
+        <div class="option" onclick="saveR3_A('5–7 päivää', false)">5–7 päivää</div>
+        <div class="option" onclick="saveR3_A('8–10 päivää', false)">8–10 päivää</div>`;
 }
 
-function saveR3(){
-    const v1=document.getElementById("r3_1").checked;
-    const v2=document.getElementById("r3_2").checked;
-    const v3=document.getElementById("r3_3").checked;
-    const v4=document.getElementById("r3_4").checked;
+function saveR3_A(text, correct){
+    R3_A=text;
+    if(correct) score++;
+    nextPhase(3);
+}
 
-    answerR3=[];
-    if(v1) answerR3.push("Hienot vaatteet");
-    if(v2) answerR3.push("Vedenpitävyys");
-    if(v3) answerR3.push("Kerrospukeutuminen");
-    if(v4) answerR3.push("Kestävyys");
+function renderR3_B(){
+    rastiView.innerHTML=`
+        <h2>Rasti 3 – Pukeutuminen</h2>
+        <p>Retkeillessä tärkeintä pukeutumisessa on?</p>
+
+        <label><input type="checkbox" id="r3b_1"> Hienot vaatteet</label><br>
+        <label><input type="checkbox" id="r3b_2"> Vedenpitävyys</label><br>
+        <label><input type="checkbox" id="r3b_3"> Kerrospukeutuminen</label><br>
+        <label><input type="checkbox" id="r3b_4"> Kestävyys</label><br>
+
+        <div class="button" onclick="saveR3_B()">Tallenna vastaus</div>`;
+}
+
+function saveR3_B(){
+    const v1=document.getElementById("r3b_1").checked;
+    const v2=document.getElementById("r3b_2").checked;
+    const v3=document.getElementById("r3b_3").checked;
+    const v4=document.getElementById("r3b_4").checked;
+
+    R3_B=[];
+    if(v1) R3_B.push("Hienot vaatteet");
+    if(v2) R3_B.push("Vedenpitävyys");
+    if(v3) R3_B.push("Kerrospukeutuminen");
+    if(v4) R3_B.push("Kestävyys");
 
     if(!v1 && v2 && v3 && v4) score++;
 
     completeRasti(3);
 }
 
-function renderRasti4(){
+//
+// RASTI 4
+//
+
+function renderR4(){
     rastiView.innerHTML=`
         <h2>Rasti 4 – Evakuointi</h2>
-        <p>Ottakaa kuva evakuoinnista.</p>
+        <p>Ottakaa kuva suorittamastanne evakuoinnista.</p>
         <input type="file" accept="image/*" capture="environment" onchange="saveEvacPhoto(event)">`;
 }
 
@@ -274,81 +337,122 @@ function saveEvacPhoto(event){
     reader.readAsDataURL(file);
 }
 
-function renderRasti5(){
+//
+// RASTI 5
+//
+
+function renderR5_A(){
+    rastiView.innerHTML=`
+        <h2>Rasti 5 – Sytyke</h2>
+        <p>Mikä on paras sytyke?</p>
+
+        <div class="option" onclick="saveR5_A('Lahonnut märkä puu', false)">Lahonnut märkä puu</div>
+        <div class="option" onclick="saveR5_A('Tuoreet oksat', false)">Tuoreet oksat</div>
+        <div class="option" onclick="saveR5_A('Sammal', false)">Sammal</div>
+        <div class="option" onclick="saveR5_A('Tuohi', true)">Tuohi</div>`;
+}
+
+function saveR5_A(text, correct){
+    R5_A=text;
+    if(correct) score++;
+    nextPhase(5);
+}
+
+function renderR5_B(){
     rastiView.innerHTML=`
         <h2>Rasti 5 – Nuotion paikka</h2>
         <p>Mihin on turvallinen paikka tehdä nuotio?</p>
-        <div class="option" onclick="saveR5('Puiden alle', false)">Puiden alle</div>
-        <div class="option" onclick="saveR5('Kallion kolo', true)">Kallion kolo</div>
-        <div class="option" onclick="saveR5('Pelto', false)">Pelto</div>
-        <div class="option" onclick="saveR5('Rakennuksen seinusta', false)">Rakennuksen seinusta</div>`;
+
+        <div class="option" onclick="saveR5_B('Puiden alle', false)">Puiden alle</div>
+        <div class="option" onclick="saveR5_B('Kallion kolo', true)">Kallion kolo</div>
+        <div class="option" onclick="saveR5_B('Pelto', false)">Pelto</div>
+        <div class="option" onclick="saveR5_B('Rakennuksen seinusta', false)">Rakennuksen seinusta</div>`;
 }
 
-function saveR5(text, correct){
-    answerR5=text;
+function saveR5_B(text, correct){
+    R5_B=text;
     if(correct) score++;
     completeRasti(5);
 }
 
-function renderRasti6(){
+//
+// RASTI 6
+//
+
+function renderR6(){
     rastiView.innerHTML=`
-        <h2>Rasti 6 – Tee itse kompassi</h2>
-        <p>Selitä omin sanoin, kuinka rakennat kompassin.</p>
-        <textarea id="compassInput" style="width:100%;height:150px;font-size:16px;padding:10px;border-radius:8px;"></textarea>
-        <h3>Kumpi neulan pää on pohjoinen?</h3>
-        <div class="option" onclick="selectCompassChoice('correct')">Luonnonmerkit: sammal pohjoisessa, oksat etelässä...</div>
-        <div class="option" onclick="selectCompassChoice('wrong')">Tuulen suunta</div>
-        <div class="option" onclick="selectCompassChoice('wrong')">Neulan kiilto</div>
-        <div class="option" onclick="selectCompassChoice('wrong')">Ruuvi vertailuna</div>
-        <div class="button" onclick="saveCompassAnswer()">Tallenna vastaus</div>`;
+        <h2>Rasti 6 – Kompassin rakentaminen</h2>
+        <p>Kirjoita omin sanoin, miten rakennat kompassin luonnossa. Repusta löytyy: vaihtovaatteita, neula ja lankaa, kuksa, vettä, puukko ja silkkihuivi.</p>
+
+        <textarea id="compassInput" 
+            style="width:100%;height:180px;font-size:16px;padding:10px;border-radius:8px;"></textarea>
+
+        <div class="button" onclick="saveR6()">Tallenna vastaus</div>
+    `;
 }
 
-function selectCompassChoice(choice){
-    compassChoice=choice;
-}
+function saveR6(){
+    R6 = document.getElementById("compassInput").value.trim();
 
-function saveCompassAnswer(){
-    compassAnswer=document.getElementById("compassInput").value.trim();
-    if(compassChoice==="correct") score++;
+    const keywords = ["kuksa", "vesi", "lehti", "kellu", "neula", "silkki", "magnet", "pohjois"];
+    let hits = 0;
+    const lower = R6.toLowerCase();
+
+    keywords.forEach(k => {
+        if(lower.includes(k)) hits++;
+    });
+
+    if(hits >= 5) score++;
+
     completeRasti(6);
 }
 
-function showFinalScreen(){
-    const endTime=Date.now();
-    const totalSeconds=Math.floor((endTime-startTime)/1000);
-    const minutes=Math.floor(totalSeconds/60);
-    const seconds=totalSeconds%60;
+//
+// LOPPUNÄKYMÄ
+//
 
-    rastiView.innerHTML=`
+function showFinalScreen(){
+    const endTime = Date.now();
+    const totalSeconds = Math.floor((endTime - startTime) / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    rastiView.innerHTML = `
         <h2>Loppunäkymä</h2>
         <h3>Ryhmä: ${teamName}</h3>
         <p>Suoritusaika: ${minutes} min ${seconds} s</p>
         <p>Pisteet: ${score}</p>
 
+        <h3>Rasti 1 – Haava</h3>
+        <p>${R1_A}</p>
+
         <h3>Rasti 1 – Tajuttomuus</h3>
-        <p>${answerR1}</p>
+        <p>${R1_B}</p>
 
         <h3>Rasti 2 – Hätämajoitus</h3>
-        ${savedShelterPhoto?`<img src="${savedShelterPhoto}">`:"Ei kuvaa"}
+        ${savedShelterPhoto ? `<img src="${savedShelterPhoto}">` : "Ei kuvaa"}
+
+        <h3>Rasti 3 – Vedenpuute</h3>
+        <p>${R3_A}</p>
 
         <h3>Rasti 3 – Pukeutuminen</h3>
-        <p>${answerR3.join(", ")}</p>
+        <p>${R3_B.join(", ")}</p>
 
         <h3>Rasti 4 – Evakuointi</h3>
-        ${savedEvacPhoto?`<img src="${savedEvacPhoto}">`:"Ei kuvaa"}
+        ${savedEvacPhoto ? `<img src="${savedEvacPhoto}">` : "Ei kuvaa"}
+
+        <h3>Rasti 5 – Sytyke</h3>
+        <p>${R5_A}</p>
 
         <h3>Rasti 5 – Nuotion paikka</h3>
-        <p>${answerR5}</p>
+        <p>${R5_B}</p>
 
-        <h3>Rasti 6 – Kompassi</h3>
-        <p>${compassAnswer}</p>
-        <p>${compassChoice==="correct"?"✔️ Oikein":"❌ Väärin"}</p>
+        <h3>Rasti 6 – Kompassin rakentaminen</h3>
+        <p>${R6}</p>
 
         <h2>Palaa veljeskorsulle</h2>
     `;
 }
 </script>
-
 </body>
 </html>
-
